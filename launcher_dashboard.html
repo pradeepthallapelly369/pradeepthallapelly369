@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Launcher &amp; Control Hub | Pradeep Thallapelly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #06090e;
+      --bg-surface: rgba(16, 23, 38, 0.75);
+      --bg-card: rgba(22, 31, 50, 0.55);
+      --bg-card-hover: rgba(28, 41, 68, 0.75);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(59, 130, 246, 0.3);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+      --status-online: #10b981;
+      --status-offline: #64748b;
+      --status-starting: #f59e0b;
+      --radius-xl: 18px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+      --shadow-glow: 0 0 25px rgba(59, 130, 246, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Top Bar */
+    header {
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: white;
+      stroke-width: 2;
+    }
+
+    .brand-title h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* System Stats Header */
+    .telemetry-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .stat-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .stat-badge strong {
+      color: var(--text-primary);
+    }
+
+    .status-dot-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Master Controls */
+    .master-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 9px 18px;
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.12);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 9px 18px;
+    }
+
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.25);
+      color: #ffe4e6;
+      border-color: rgba(244, 63, 94, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 9px 16px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 36px 32px 64px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* Hero Banner */
+    .hero {
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .hero-text h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+
+    .hero-text p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      max-width: 600px;
+    }
+
+    /* Filter Chips */
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 28px;
+      overflow-x: auto;
+    }
+
+    .filter-tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+    }
+
+    .filter-tab:hover {
+      color: var(--text-primary);
+    }
+
+    .filter-tab.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Grid of Cards */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 24px;
+    }
+
+    /* Card Component */
+    .app-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: transparent;
+      transition: background 0.3s ease;
+    }
+
+    .app-card.running::before {
+      background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
+    }
+
+    .app-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.6), var(--shadow-glow);
+    }
+
+    /* Card Top */
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .app-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .app-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.15);
+    }
+
+    .icon-indigo { background: linear-gradient(135deg, #4f46e5, #818cf8); }
+    .icon-emerald { background: linear-gradient(135deg, #059669, #34d399); }
+    .icon-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+    .icon-purple { background: linear-gradient(135deg, #7c3aed, #c084fc); }
+    .icon-amber { background: linear-gradient(135deg, #d97706, #fbbf24); }
+    .icon-rose { background: linear-gradient(135deg, #e11d48, #fb7185); }
+    .icon-cyan { background: linear-gradient(135deg, #0891b2, #22d3ee); }
+
+    .app-header-info h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .category-tag {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    /* Status Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-badge.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.online .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    .status-badge.offline {
+      background: rgba(100, 116, 139, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.25);
+    }
+
+    .status-badge.offline .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .status-badge.starting {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-badge.starting .indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse 1.2s infinite;
+    }
+
+    /* Card Content */
+    .app-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      line-height: 1.55;
+      min-height: 42px;
+    }
+
+    /* Meta Info (Port, PID, Memory) */
+    .app-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .meta-item span {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .port-link {
+      color: var(--accent-cyan);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .port-link:hover {
+      text-decoration: underline;
+      color: #67e8f9;
+    }
+
+    /* Card Action Footer */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 18px;
+    }
+
+    .btn-action {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 14px;
+      font-size: 12.5px;
+    }
+
+    .btn-launch {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-launch:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-stop {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .btn-stop:hover {
+      background: rgba(244, 63, 94, 0.3);
+      color: #ffe4e6;
+    }
+
+    .btn-open {
+      background: rgba(59, 130, 246, 0.12);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-open:hover {
+      background: rgba(59, 130, 246, 0.25);
+      color: #bfdbfe;
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-open.disabled {
+      opacity: 0.35;
+      pointer-events: none;
+      filter: grayscale(1);
+    }
+
+    .btn-icon-only {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-icon-only:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Daily Automations Section */
+    .automations-section {
+      margin-top: 56px;
+      padding-top: 36px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .section-title-wrap h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 50%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .pulse-icon {
+      font-size: 22px;
+      display: inline-block;
+      animation: gentle-bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .badge-ist {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 600;
+    }
+
+    .section-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 720px;
+    }
+
+    .scheduler-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-scheduler {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .btn-scheduler:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-scheduler.paused {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.35);
+    }
+
+    .btn-scheduler.paused:hover {
+      background: rgba(244, 63, 94, 0.25);
+    }
+
+    .btn-scheduler .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .automation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 20px;
+    }
+
+    .auto-card {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-glass);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auto-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+
+    .auto-card.running-now {
+      border-color: rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+    }
+
+    .auto-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .auto-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .auto-icon {
+      font-size: 22px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auto-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .auto-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .badge-schedule {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(14, 165, 233, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .badge-recurrence {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(139, 92, 246, 0.12);
+      color: #c084fc;
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .auto-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 4px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .auto-status-pill.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .auto-status-pill.running {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      animation: pulse 1.5s infinite;
+    }
+
+    .auto-status-pill.error {
+      background: rgba(244, 63, 94, 0.15);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .auto-status-pill.idle {
+      background: rgba(100, 116, 139, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.25);
+    }
+
+    .auto-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .auto-telemetry {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+
+    .auto-tel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .auto-tel-label {
+      color: var(--text-muted);
+    }
+
+    .auto-tel-val {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .auto-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 14px;
+    }
+
+    .btn-run-auto {
+      flex: 1;
+      justify-content: center;
+      padding: 9px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-run-auto:hover {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-run-auto:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    /* Modal / Drawer for Logs */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #0d121f;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 900px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .modal-header h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: white;
+    }
+
+    .modal-body {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+      background: #070a12;
+    }
+
+    .terminal-view {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+
+    .modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: rgba(16, 24, 39, 0.95);
+      border: 1px solid var(--border-glow);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      header {
+        padding: 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .telemetry-bar {
+        width: 100%;
+        justify-content: space-between;
+      }
+      main {
+        padding: 20px 16px;
+      }
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+      </div>
+      <div class="brand-title">
+        <h1>Antigravity Nexus</h1>
+        <p>Unified Application Hub &amp; Process Supervisor</p>
+      </div>
+    </a>
+
+    <div class="telemetry-bar">
+      <div class="stat-badge">
+        <div class="status-dot-pulse"></div>
+        <span>Online: <strong id="active-count">0 / 7</strong></span>
+      </div>
+      <div class="stat-badge">
+        <span>CPU: <strong id="cpu-stat">--%</strong></span>
+      </div>
+      <div class="stat-badge">
+        <span>RAM: <strong id="ram-stat">--%</strong></span>
+      </div>
+
+      <div class="master-actions">
+        <button id="btn-launch-all" class="btn-primary" onclick="launchAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Launch All
+        </button>
+        <button id="btn-stop-all" class="btn-danger" onclick="stopAll()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+          </svg>
+          Stop All
+        </button>
+        <button class="btn-secondary" onclick="fetchStatus()" title="Refresh Status">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <div class="hero">
+      <div class="hero-text">
+        <h2>Workspace Applications</h2>
+        <p>Launch, supervise, and access all intelligent agents, trading terminals, and job automation bots from one unified mission control center.</p>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setFilter('all', this)">All Apps (<span id="count-all">7</span>)</button>
+      <button class="filter-tab" onclick="setFilter('Trading & FinTech', this)">Trading &amp; FinTech</button>
+      <button class="filter-tab" onclick="setFilter('Career & Jobs', this)">Career &amp; Jobs</button>
+      <button class="filter-tab" onclick="setFilter('AI Agents', this)">AI Agents</button>
+      <button class="filter-tab" onclick="setFilter('Web Portfolio', this)">Web Portfolio</button>
+    </div>
+
+    <!-- App Cards Grid -->
+    <div class="app-grid" id="app-grid">
+      <!-- Dynamically injected via JavaScript -->
+    </div>
+
+    <!-- Daily Automations Section -->
+    <section class="automations-section">
+      <div class="section-header">
+        <div>
+          <div class="section-title-wrap">
+            <span class="pulse-icon">⏰</span>
+            <h2>Daily Automation Engine</h2>
+            <span class="badge-ist" id="ist-clock">IST: --:--:--</span>
+          </div>
+          <p class="section-desc">Autonomous background routines scheduled daily in Indian Standard Time (IST). Operates continuously or trigger on-demand with live stdout log streams.</p>
+        </div>
+        <div class="scheduler-controls">
+          <button id="scheduler-toggle-btn" class="btn-scheduler" onclick="toggleScheduler()">
+            <span class="status-indicator"></span>
+            <span id="scheduler-toggle-text">Scheduler: ACTIVE</span>
+          </button>
+          <button class="btn-secondary" onclick="fetchAutomations()" title="Refresh Automations">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="automation-grid" id="automation-grid">
+        <!-- Dynamically injected via JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Terminal Log Viewer Modal -->
+  <div class="modal-overlay" id="log-modal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="modal-app-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          Live Console Output
+        </h3>
+        <button class="modal-close" onclick="closeLogModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="terminal-container">
+        <pre class="terminal-view" id="terminal-text">Loading application logs...</pre>
+      </div>
+      <div class="modal-footer">
+        <span style="font-size: 12px; color: var(--text-muted);" id="log-path-info">Log tail (last 150 lines)</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="refreshCurrentLogs()">Refresh Logs</button>
+          <button class="btn-primary" onclick="closeLogModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    let appsData = {};
+    let automationsData = {};
+    let activeFilter = 'all';
+    let currentLogAppId = null;
+    let currentLogType = 'app';
+    let logPollTimer = null;
+
+    // Toast helper
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      const icon = type === 'success' ? '✅' : type === 'error' ? '⚠️' : 'ℹ️';
+      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Filter Helper
+    function setFilter(category, btn) {
+      activeFilter = category;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderApps();
+    }
+
+    // Fetch Status from Backend
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        appsData = data.apps || {};
+        
+        // Update System Telemetry
+        document.getElementById('cpu-stat').innerText = `${data.telemetry.cpu_percent}%`;
+        document.getElementById('ram-stat').innerText = `${data.telemetry.memory_percent}%`;
+        
+        const total = Object.keys(appsData).length;
+        const running = Object.values(appsData).filter(a => a.status === 'RUNNING').length;
+        document.getElementById('active-count').innerText = `${running} / ${total}`;
+        document.getElementById('count-all').innerText = total;
+
+        renderApps();
+      } catch (err) {
+        console.error('Error polling status:', err);
+      }
+    }
+
+    // Render App Cards
+    function renderApps() {
+      const grid = document.getElementById('app-grid');
+      grid.innerHTML = '';
+
+      Object.entries(appsData).forEach(([appId, app]) => {
+        if (activeFilter !== 'all' && app.category !== activeFilter) {
+          return;
+        }
+
+        const isOnline = app.status === 'RUNNING';
+        const isStarting = app.status === 'STARTING';
+        const cardClass = isOnline ? 'app-card running' : 'app-card';
+        const statusClass = isOnline ? 'online' : isStarting ? 'starting' : 'offline';
+        const statusText = isOnline ? 'ONLINE' : isStarting ? 'STARTING' : 'OFFLINE';
+
+        const card = document.createElement('div');
+        card.className = cardClass;
+        card.id = `card-${appId}`;
+
+        card.innerHTML = `
+          <div>
+            <div class="card-top">
+              <div class="app-badge-group">
+                <div class="app-icon ${app.icon_class || 'icon-indigo'}">${app.icon_emoji || '🚀'}</div>
+                <div class="app-header-info">
+                  <h3>${app.name}</h3>
+                  <div class="category-tag">${app.category}</div>
+                </div>
+              </div>
+              <div class="status-badge ${statusClass}">
+                <div class="indicator"></div>
+                <span>${statusText}</span>
+              </div>
+            </div>
+
+            <p class="app-desc">${app.description}</p>
+
+            <div class="app-meta">
+              <div class="meta-item">
+                <span>PORT:</span>
+                <a href="${app.url}" target="_blank" class="port-link">:${app.port}</a>
+              </div>
+              ${app.secondary_port ? `
+                <div class="meta-item">
+                  <span>UI:</span>
+                  <a href="${app.secondary_url || '#'}" target="_blank" class="port-link">:${app.secondary_port}</a>
+                </div>
+              ` : ''}
+              <div class="meta-item">
+                <span>PID:</span>
+                <span>${app.pid || '--'}</span>
+              </div>
+              ${app.memory_mb ? `
+                <div class="meta-item">
+                  <span>MEM:</span>
+                  <span>${app.memory_mb} MB</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="card-footer">
+            ${isOnline ? `
+              <button class="btn-action btn-stop" onclick="stopApp('${appId}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"></rect></svg>
+                Stop
+              </button>
+            ` : `
+              <button class="btn-action btn-launch" onclick="startApp('${appId}')" ${isStarting ? 'disabled' : ''}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                ${isStarting ? 'Starting...' : 'Launch'}
+              </button>
+            `}
+
+            <a href="${app.url}" target="_blank" class="btn-open ${isOnline ? '' : 'disabled'}" title="Open App in Browser">
+              <span>Open</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+
+            <button class="btn-icon-only" onclick="openLogModal('${appId}')" title="View Console Logs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+              </svg>
+            </button>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // App Control Actions
+    async function startApp(appId) {
+      showToast(`Starting ${appsData[appId]?.name || appId}...`, 'info');
+      try {
+        const res = await fetch(`/api/apps/${appId}/start`, { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showToast(`Launched ${appsData[appId]?.name || appId}!`, 'success');
+        } else {
+          showToast(`Failed to start: ${result.error}`, 'error');
+        }
+        fetchStatus();
+      } catch (err) {
+        showToast(`Request failed: ${err}`, 'error');
+      }
+    }
+
+    async function stopApp(appId) {
+      showToast(`Stopping ${appsData[appId]?.name || appId}...`, 'info');
+      try {
+        const res = await fetch(`/api/apps/${appId}/stop`, { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showToast(`Stopped ${appsData[appId]?.name || appId}`, 'info');
+        } else {
+          showToast(`Failed to stop: ${result.error}`, 'error');
+        }
+        fetchStatus();
+      } catch (err) {
+        showToast(`Request failed: ${err}`, 'error');
+      }
+    }
+
+    async function launchAll() {
+      showToast('Launching all workspace applications...', 'info');
+      try {
+        const res = await fetch('/api/start-all', { method: 'POST' });
+        const result = await res.json();
+        showToast('Launch initiated for all apps!', 'success');
+        setTimeout(fetchStatus, 1500);
+      } catch (err) {
+        showToast(`Launch all error: ${err}`, 'error');
+      }
+    }
+
+    async function stopAll() {
+      showToast('Terminating all running applications...', 'info');
+      try {
+        const res = await fetch('/api/stop-all', { method: 'POST' });
+        const result = await res.json();
+        showToast('All apps stopped successfully.', 'info');
+        fetchStatus();
+      } catch (err) {
+        showToast(`Stop all error: ${err}`, 'error');
+      }
+    }
+
+    // ==================== DAILY AUTOMATIONS LOGIC ====================
+    async function fetchAutomations() {
+      try {
+        const res = await fetch('/api/automations');
+        const data = await res.json();
+        automationsData = data.automations || {};
+        
+        // Update live clock
+        if (data.current_time_ist) {
+          document.getElementById('ist-clock').innerText = `IST: ${data.current_time_ist}`;
+        }
+        
+        // Update scheduler toggle
+        const toggleBtn = document.getElementById('scheduler-toggle-btn');
+        const toggleText = document.getElementById('scheduler-toggle-text');
+        if (data.scheduler_enabled) {
+          toggleBtn.className = 'btn-scheduler';
+          toggleText.innerText = 'Scheduler: ACTIVE';
+        } else {
+          toggleBtn.className = 'btn-scheduler paused';
+          toggleText.innerText = 'Scheduler: PAUSED';
+        }
+
+        renderAutomations();
+      } catch (err) {
+        console.error('Error fetching automations:', err);
+      }
+    }
+
+    function renderAutomations() {
+      const grid = document.getElementById('automation-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      Object.entries(automationsData).forEach(([autoId, auto]) => {
+        const isRunning = auto.is_running;
+        const status = isRunning ? 'running' : (auto.last_status || 'idle').toLowerCase();
+        const statusLabel = isRunning ? 'RUNNING NOW' : (auto.last_status || 'IDLE');
+        const cardClass = isRunning ? 'auto-card running-now' : 'auto-card';
+
+        const card = document.createElement('div');
+        card.className = cardClass;
+        card.id = `auto-${autoId}`;
+
+        card.innerHTML = `
+          <div>
+            <div class="auto-card-top">
+              <div class="auto-title-group">
+                <div class="auto-icon">${auto.icon_emoji || '⚡'}</div>
+                <div>
+                  <h3 class="auto-name">${auto.name}</h3>
+                  <div class="auto-badges">
+                    <span class="badge-schedule">${auto.schedule_display}</span>
+                    <span class="badge-recurrence">${auto.weekdays_only ? 'Mon - Fri' : 'Daily'}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="auto-status-pill ${status}">
+                <span>${statusLabel}</span>
+              </div>
+            </div>
+
+            <p class="auto-desc">${auto.description}</p>
+
+            <div class="auto-telemetry">
+              <div class="auto-tel-row">
+                <span class="auto-tel-label">NEXT RUN:</span>
+                <span class="auto-tel-val" style="color: #38bdf8;">${auto.next_run || '--'}</span>
+              </div>
+              <div class="auto-tel-row">
+                <span class="auto-tel-label">LAST RUN:</span>
+                <span class="auto-tel-val">${auto.last_run || 'Never'}</span>
+              </div>
+              ${auto.last_duration_sec !== null ? `
+                <div class="auto-tel-row">
+                  <span class="auto-tel-label">DURATION:</span>
+                  <span class="auto-tel-val">${auto.last_duration_sec}s</span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <div class="auto-footer">
+            <button class="btn-run-auto" onclick="runAutomation('${autoId}')" ${isRunning ? 'disabled' : ''}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              ${isRunning ? 'Executing...' : 'Run Now'}
+            </button>
+            <button class="btn-icon-only" onclick="openAutomationLogModal('${autoId}')" title="Inspect Automation Logs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+              </svg>
+            </button>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    async function runAutomation(autoId) {
+      const auto = automationsData[autoId];
+      showToast(`Triggering ${auto ? auto.name : autoId}...`, 'info');
+      try {
+        const res = await fetch(`/api/automations/${autoId}/run`, { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showToast(`Started ${auto ? auto.name : autoId}!`, 'success');
+        } else {
+          showToast(`Failed: ${result.error}`, 'error');
+        }
+        fetchAutomations();
+      } catch (err) {
+        showToast(`Request failed: ${err}`, 'error');
+      }
+    }
+
+    async function toggleScheduler() {
+      try {
+        const res = await fetch('/api/automations/toggle', { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showToast(result.scheduler_enabled ? 'Daily Scheduler Activated!' : 'Daily Scheduler Paused', 'info');
+        }
+        fetchAutomations();
+      } catch (err) {
+        showToast(`Failed to toggle scheduler: ${err}`, 'error');
+      }
+    }
+
+    // ==================== LOG MODAL ====================
+    async function openLogModal(appId) {
+      currentLogType = 'app';
+      currentLogAppId = appId;
+      const app = appsData[appId];
+      document.getElementById('modal-app-title').innerText = `${app ? app.name : appId} — Terminal Logs`;
+      document.getElementById('log-modal').classList.add('active');
+      document.getElementById('terminal-text').innerText = 'Fetching latest logs...';
+      
+      await refreshCurrentLogs();
+      if (logPollTimer) clearInterval(logPollTimer);
+      logPollTimer = setInterval(refreshCurrentLogs, 2500);
+    }
+
+    async function openAutomationLogModal(autoId) {
+      currentLogType = 'automation';
+      currentLogAppId = autoId;
+      const auto = automationsData[autoId];
+      document.getElementById('modal-app-title').innerText = `${auto ? auto.name : autoId} — Automation Logs`;
+      document.getElementById('log-modal').classList.add('active');
+      document.getElementById('terminal-text').innerText = 'Fetching latest automation logs...';
+      
+      await refreshCurrentLogs();
+      if (logPollTimer) clearInterval(logPollTimer);
+      logPollTimer = setInterval(refreshCurrentLogs, 2500);
+    }
+
+    function closeLogModal() {
+      document.getElementById('log-modal').classList.remove('active');
+      if (logPollTimer) clearInterval(logPollTimer);
+      currentLogAppId = null;
+    }
+
+    async function refreshCurrentLogs() {
+      if (!currentLogAppId) return;
+      try {
+        const endpoint = currentLogType === 'automation'
+          ? `/api/automations/${currentLogAppId}/logs`
+          : `/api/apps/${currentLogAppId}/logs`;
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        const term = document.getElementById('terminal-text');
+        term.innerText = data.logs || 'No output recorded yet for this process.';
+        const container = document.getElementById('terminal-container');
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        console.error('Error fetching logs:', err);
+      }
+    }
+
+    // Initial Polling
+    fetchStatus();
+    fetchAutomations();
+    setInterval(() => {
+      fetchStatus();
+      fetchAutomations();
+    }, 2500);
+  </script>
+</body>
+</html>
