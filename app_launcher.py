@@ -173,6 +173,19 @@ APPS_REGISTRY: Dict[str, Dict[str, Any]] = {
         "cwd": os.path.join(BASE_DIR, "MiroFish", "backend"),
         "command": [PYTHON_BIN, "run.py"],
         "url": "http://localhost:5001"
+    },
+    "colibri_studio": {
+        "id": "colibri_studio",
+        "name": "Colibrì Studio (MoE Orchestrator)",
+        "description": "Multi-tier Mixture-of-Experts inference engine & cortex visualizer with dynamic auto-routing.",
+        "category": "AI Agents",
+        "icon_emoji": "🐦",
+        "icon_class": "icon-cyan",
+        "port": 8088,
+        "secondary_port": None,
+        "cwd": os.path.join(BASE_DIR, "GlobalCareer-AI-Engine", "colibri-studio"),
+        "command": [PYTHON_BIN, "-m", "uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8088"],
+        "url": "http://localhost:8088"
     }
 }
 
